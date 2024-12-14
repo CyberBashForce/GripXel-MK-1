@@ -71,11 +71,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>I:\CodeX\OpenGL\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\CodeX\OpenGL\include\imgui\backends;I:\CodeX\OpenGL\include\imgui;I:\CodeX\OpenGL\include;$(IncludePath)</IncludePath>
     <LibraryPath>I:\CodeX\OpenGL\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>I:\CodeX\OpenGL\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\CodeX\OpenGL\include\imgui\backends;I:\CodeX\OpenGL\include\imgui;I:\CodeX\OpenGL\include;$(IncludePath)</IncludePath>
     <LibraryPath>I:\CodeX\OpenGL\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -90,7 +90,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;glfw3.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;glfw3.lib;gdi32.lib;user32.lib;assimp-vc143-mtd.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -121,7 +121,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;glfw3.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;glfw3.lib;gdi32.lib;user32.lib;assimp-vc143-mtd.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,13 +141,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\include\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\..\include\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\..\include\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\include\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\include\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\include\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\..\resources\glad\src\glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="stb_file_img.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\glad\glad.h" />
     <ClInclude Include="..\..\include\GLFW\glfw3.h" />
-    <ClInclude Include="..\..\include\GLFW\glfw3native.h" />
+    <ClInclude Include="..\..\include\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="..\..\include\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\..\include\imgui\imgui.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

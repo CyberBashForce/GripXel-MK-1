@@ -21,6 +21,30 @@
     <ClCompile Include="..\..\resources\glad\src\glad.c">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\imgui\imgui.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\imgui\imgui_demo.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\imgui\imgui_draw.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\imgui\imgui_widgets.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\imgui\imgui_tables.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_file_img.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\glad\glad.h">
@@ -29,7 +53,13 @@
     <ClInclude Include="..\..\include\GLFW\glfw3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\GLFW\glfw3native.h">
+    <ClInclude Include="..\..\include\imgui\imgui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\imgui\backends\imgui_impl_glfw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\imgui\backends\imgui_impl_opengl3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
