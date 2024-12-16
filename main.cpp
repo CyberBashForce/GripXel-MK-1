@@ -15,20 +15,23 @@
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 
-const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_WIDTH = 1000;
 const unsigned int SCR_HEIGHT = 800;
 
 void framebuffer_size_callback(GLFWwindow* window, int width,int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void FitToScreen(GLFWwindow* window);
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+bool firstLoad = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -59,6 +62,8 @@ std::string OpenFileDialog() {
 
 		std::string result = std::string(buffer);
 		delete[] buffer; // Clean up the allocated memory
+
+		std::replace(result.begin(), result.end(), '\\', '/');
 
 		return result;
 	}
@@ -175,10 +180,26 @@ int main() {
 						if (ourModel != nullptr) {
 							delete ourModel; // Clean up the previous model if any
 						}
-						//ourModel = new Model(selectedFile); // Load the new model
-						ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
+						ourModel = new Model(selectedFile); // Load the new model
+						//ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
 						// tell GLFW to capture our mouse
 						//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+						// Precompute the initial fit for the loaded model
+						ourModel->ComputeInitialFit(camera, SCR_WIDTH, SCR_HEIGHT);
+
+						camera.Position = ourModel->initialCameraPosition;
+						camera.LookAt(ourModel->initialTargetPosition);
+
+						camera.Yaw = glm::degrees(atan2(camera.Front.z, camera.Front.x)); // Yaw is the angle in the XZ-plane
+						camera.Pitch = glm::degrees(asin(camera.Front.y)); // Pitch is the vertical angle
+
+						//Center the cursor on the screen
+						glfwSetCursorPos(window, SCR_WIDTH / 2.0f, SCR_HEIGHT / 2.0f);
+						lastX = SCR_WIDTH / 2.0f; // Update lastX to match centered cursor
+						lastY = SCR_HEIGHT / 2.0f; // Update lastY to match centered cursor
+
+						firstMouse = false; // Ensure the next mouse movement doesn't trigger a reset
+
 					}
 					else {
 						std::cout << "No file selected." << std::endl;
@@ -195,6 +216,10 @@ int main() {
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
+			if (firstLoad) {
+				FitToScreen(window);
+				firstLoad = false;
+			}
 		}
 		// Render ImGui
 		ImGui::Render();
@@ -239,6 +264,10 @@ void processInput(GLFWwindow* window) {
 		camera.ProcessKeyboard(UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 		camera.ProcessKeyboard(DOWN, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+		FitToScreen(window);
+	}
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
@@ -250,6 +279,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 		lastX = xpos;
 		lastY = ypos;
 		firstMouse = false;
+		cout << "#CLAED | " << xpos - lastX<< '\n';
 	}
 
 	float xoffset = xpos - lastX;
@@ -263,4 +293,25 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+void FitToScreen(GLFWwindow* window) {
+	if (ourModel == nullptr) return;
+
+	// Reposition the camera to fit the model
+	camera.Position = ourModel->initialCameraPosition;
+	camera.LookAt(ourModel->initialTargetPosition);
+
+	// Calculate the new Yaw and Pitch from the camera's Front vector
+	camera.Yaw = glm::degrees(atan2(camera.Front.z, camera.Front.x)); // Yaw is the angle in the XZ-plane
+	camera.Pitch = glm::degrees(asin(camera.Front.y)); // Pitch is the vertical angle
+
+	// Center the cursor on the screen
+	glfwSetCursorPos(window, SCR_WIDTH / 2.0f, SCR_HEIGHT / 2.0f);
+	lastX = SCR_WIDTH / 2.0f; // Update lastX to match centered cursor
+	lastY = SCR_HEIGHT / 2.0f; // Update lastY to match centered cursor
+
+	firstMouse = false; // Ensure the next mouse movement doesn't trigger a reset
+
+	//std::cout << "Camera repositioned to precomputed fit." << std::endl;
 }

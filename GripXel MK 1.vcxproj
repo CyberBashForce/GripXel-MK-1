@@ -153,6 +153,8 @@
     <ClCompile Include="stb_file_img.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\Custom\camera.h" />
+    <ClInclude Include="..\..\include\Custom\model.h" />
     <ClInclude Include="..\..\include\glad\glad.h" />
     <ClInclude Include="..\..\include\GLFW\glfw3.h" />
     <ClInclude Include="..\..\include\imgui\backends\imgui_impl_glfw.h" />
