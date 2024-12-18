@@ -25,6 +25,11 @@ void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void FitToScreen(GLFWwindow* window);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+
+void manipulator(GLFWwindow* window, Shader& shader);
+
+glm::mat4 model = glm::mat4(1.0f);
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -37,7 +42,15 @@ bool firstLoad = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+float xoffset = 0.0f;
+float yoffset = 0.0f;
+
 Model* ourModel = nullptr;
+
+bool mouse_mid_btn = false;
+bool CTRL = false;
+
+float mouseSensitivity = 0.2f;
 
 // Function to open file dialog and get the file path
 std::string OpenFileDialog() {
@@ -92,6 +105,7 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 	//Load Glad
 
@@ -146,19 +160,16 @@ int main() {
 		ourShader.setMat4("view", view);
 
 		// render the loaded model
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
-		ourShader.setMat4("model", model);
+		
+		manipulator(window,ourShader);
+		//glm::mat4 model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+		//model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
+		//ourShader.setMat4("model", model);
 
 		// Render the loaded model (if it's loaded)
 		if (ourModel != nullptr) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // Center it
-			model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f)); // Adjust size
-			ourShader.setMat4("model", model);
-
 			ourModel->Draw(ourShader); // Draw the model
 			//std::cout << "Model loaded with " << ourModel->meshes.size() << " meshes." << std::endl;
 
@@ -186,6 +197,8 @@ int main() {
 						//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 						// Precompute the initial fit for the loaded model
 						ourModel->ComputeInitialFit(camera, SCR_WIDTH, SCR_HEIGHT);
+						camera.Target = ourModel->initialTargetPosition;
+						camera.Radius = glm::length(camera.Position - camera.Target);
 
 						camera.Position = ourModel->initialCameraPosition;
 						camera.LookAt(ourModel->initialTargetPosition);
@@ -268,6 +281,15 @@ void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
 		FitToScreen(window);
 	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+		camera.ctrl = true;
+		CTRL = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE) {
+		camera.ctrl = false;
+		CTRL = false;
+	}
+	
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
@@ -282,12 +304,14 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 		cout << "#CLAED | " << xpos - lastX<< '\n';
 	}
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
+	xoffset = xpos - lastX;
+	yoffset = lastY - ypos;
 	lastX = xpos;
 	lastY = ypos;
 
-	camera.ProcessMouseMovement(-xoffset, -yoffset);
+	//camera.ProcessMouseMovement();
+	camera.cam_x = -xoffset;
+	camera.cam_y = -yoffset;
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -300,6 +324,8 @@ void FitToScreen(GLFWwindow* window) {
 
 	// Reposition the camera to fit the model
 	camera.Position = ourModel->initialCameraPosition;
+	//camera.Target = ourModel->initialTargetPosition;
+	//camera.Radius = glm::length(camera.Position - camera.Target);
 	camera.LookAt(ourModel->initialTargetPosition);
 
 	// Calculate the new Yaw and Pitch from the camera's Front vector
@@ -314,4 +340,27 @@ void FitToScreen(GLFWwindow* window) {
 	firstMouse = false; // Ensure the next mouse movement doesn't trigger a reset
 
 	//std::cout << "Camera repositioned to precomputed fit." << std::endl;
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		if (action == GLFW_PRESS) {
+			camera.middle_Btn = true;
+			mouse_mid_btn = true;
+		}
+		else if (action == GLFW_RELEASE) {
+			camera.middle_Btn = false;
+			mouse_mid_btn = false;
+		}
+	}
+}
+
+void manipulator(GLFWwindow* window, Shader& ourShader) {
+	if (CTRL && mouse_mid_btn) {
+		model = glm::translate(model, glm::vec3(xoffset*mouseSensitivity,yoffset*mouseSensitivity,0.0f));
+	}
+	else if (mouse_mid_btn) {
+
+	}
+	ourShader.setMat4("model", model);
 }
