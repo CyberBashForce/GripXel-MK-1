@@ -71,11 +71,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>I:\CodeX\OpenGL\include\imgui\backends;I:\CodeX\OpenGL\include\imgui;I:\CodeX\OpenGL\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\CodeX\OpenGL\Projects\GripXel MK 1\include\imgui\backends;I:\CodeX\OpenGL\Projects\GripXel MK 1\include\imgui;I:\CodeX\OpenGL\Projects\GripXel MK 1\include;$(IncludePath)</IncludePath>
     <LibraryPath>I:\CodeX\OpenGL\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>I:\CodeX\OpenGL\include\imgui\backends;I:\CodeX\OpenGL\include\imgui;I:\CodeX\OpenGL\include;$(IncludePath)</IncludePath>
+    <IncludePath>I:\CodeX\OpenGL\Projects\GripXel MK 1\include\imgui\backends;I:\CodeX\OpenGL\Projects\GripXel MK 1\include\imgui;I:\CodeX\OpenGL\Projects\GripXel MK 1\include;$(IncludePath)</IncludePath>
     <LibraryPath>I:\CodeX\OpenGL\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -153,13 +153,12 @@
     <ClCompile Include="stb_file_img.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\Custom\camera.h" />
-    <ClInclude Include="..\..\include\Custom\model.h" />
-    <ClInclude Include="..\..\include\glad\glad.h" />
-    <ClInclude Include="..\..\include\GLFW\glfw3.h" />
-    <ClInclude Include="..\..\include\imgui\backends\imgui_impl_glfw.h" />
-    <ClInclude Include="..\..\include\imgui\backends\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\..\include\imgui\imgui.h" />
+    <ClInclude Include="include\Custom\camera.h" />
+    <ClInclude Include="include\Custom\model.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Project8\model_loading_fs.glsl" />
+    <None Include="..\Project8\model_loading_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

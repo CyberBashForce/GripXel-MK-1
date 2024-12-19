@@ -20,16 +20,11 @@
 const unsigned int SCR_WIDTH = 1000;
 const unsigned int SCR_HEIGHT = 800;
 
-void framebuffer_size_callback(GLFWwindow* window, int width,int height);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void FitToScreen(GLFWwindow* window);
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-
-void manipulator(GLFWwindow* window, Shader& shader);
-
-glm::mat4 model = glm::mat4(1.0f);
+void fitToScreen();
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -38,19 +33,15 @@ float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 bool firstLoad = true;
 
+glm::mat4 model = (1.0f);
+
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-float xoffset = 0.0f;
-float yoffset = 0.0f;
-
 Model* ourModel = nullptr;
-
-bool mouse_mid_btn = false;
-bool CTRL = false;
-
-float mouseSensitivity = 0.2f;
+Shader* globalShader = nullptr;
+//Shader ourShader("I:/CodeX/OpenGL/Projects/Project8/model_loading_vs.glsl", "I:/CodeX/OpenGL/Projects/Project8/model_loading_fs.glsl");
 
 // Function to open file dialog and get the file path
 std::string OpenFileDialog() {
@@ -85,7 +76,7 @@ std::string OpenFileDialog() {
 }
 
 int main() {
-	
+
 	//Setup GLFW
 
 	glfwInit();
@@ -96,7 +87,7 @@ int main() {
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "GripXel MK 1", NULL, NULL);
 
 	if (window == NULL) {
-		std::cout << "Error Creating the Window!"<<'\n';
+		std::cout << "Error Creating the Window!" << '\n';
 		glfwTerminate();
 		return -1;
 	}
@@ -105,7 +96,6 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 	//Load Glad
 
@@ -138,6 +128,7 @@ int main() {
 
 	Shader ourShader("I:/CodeX/OpenGL/Projects/Project8/model_loading_vs.glsl", "I:/CodeX/OpenGL/Projects/Project8/model_loading_fs.glsl");
 	//ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
+	globalShader = &ourShader;
 	//Render Engine
 	while (!glfwWindowShouldClose(window)) {
 
@@ -159,13 +150,7 @@ int main() {
 		ourShader.setMat4("projection", projection);
 		ourShader.setMat4("view", view);
 
-		// render the loaded model
-		
-		manipulator(window,ourShader);
-		//glm::mat4 model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
-		//ourShader.setMat4("model", model);
+		ourShader.setMat4("model", model);
 
 		// Render the loaded model (if it's loaded)
 		if (ourModel != nullptr) {
@@ -192,27 +177,7 @@ int main() {
 							delete ourModel; // Clean up the previous model if any
 						}
 						ourModel = new Model(selectedFile); // Load the new model
-						//ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
-						// tell GLFW to capture our mouse
-						//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-						// Precompute the initial fit for the loaded model
-						ourModel->ComputeInitialFit(camera, SCR_WIDTH, SCR_HEIGHT);
-						camera.Target = ourModel->initialTargetPosition;
-						camera.Radius = glm::length(camera.Position - camera.Target);
-
-						camera.Position = ourModel->initialCameraPosition;
-						camera.LookAt(ourModel->initialTargetPosition);
-
-						camera.Yaw = glm::degrees(atan2(camera.Front.z, camera.Front.x)); // Yaw is the angle in the XZ-plane
-						camera.Pitch = glm::degrees(asin(camera.Front.y)); // Pitch is the vertical angle
-
-						//Center the cursor on the screen
-						glfwSetCursorPos(window, SCR_WIDTH / 2.0f, SCR_HEIGHT / 2.0f);
-						lastX = SCR_WIDTH / 2.0f; // Update lastX to match centered cursor
-						lastY = SCR_HEIGHT / 2.0f; // Update lastY to match centered cursor
-
-						firstMouse = false; // Ensure the next mouse movement doesn't trigger a reset
-
+						fitToScreen();
 					}
 					else {
 						std::cout << "No file selected." << std::endl;
@@ -229,10 +194,7 @@ int main() {
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
-			if (firstLoad) {
-				FitToScreen(window);
-				firstLoad = false;
-			}
+		
 		}
 		// Render ImGui
 		ImGui::Render();
@@ -240,7 +202,7 @@ int main() {
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-		
+
 	}
 	// Cleanup
 	if (ourModel != nullptr) {
@@ -253,7 +215,7 @@ int main() {
 	ImGui::DestroyContext();
 
 	glfwTerminate();
-	
+
 	return 0;
 }
 
@@ -277,19 +239,9 @@ void processInput(GLFWwindow* window) {
 		camera.ProcessKeyboard(UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 		camera.ProcessKeyboard(DOWN, deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-		FitToScreen(window);
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-		camera.ctrl = true;
-		CTRL = true;
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE) {
-		camera.ctrl = false;
-		CTRL = false;
-	}
 	
+	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+		fitToScreen();
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
@@ -301,17 +253,15 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 		lastX = xpos;
 		lastY = ypos;
 		firstMouse = false;
-		cout << "#CLAED | " << xpos - lastX<< '\n';
+		cout << "#CLAED | " << xpos - lastX << '\n';
 	}
 
-	xoffset = xpos - lastX;
-	yoffset = lastY - ypos;
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
 	lastX = xpos;
 	lastY = ypos;
 
-	//camera.ProcessMouseMovement();
-	camera.cam_x = -xoffset;
-	camera.cam_y = -yoffset;
+	//camera.ProcessMouseMovement(-xoffset, -yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -319,48 +269,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void FitToScreen(GLFWwindow* window) {
-	if (ourModel == nullptr) return;
-
-	// Reposition the camera to fit the model
-	camera.Position = ourModel->initialCameraPosition;
-	//camera.Target = ourModel->initialTargetPosition;
-	//camera.Radius = glm::length(camera.Position - camera.Target);
-	camera.LookAt(ourModel->initialTargetPosition);
-
-	// Calculate the new Yaw and Pitch from the camera's Front vector
-	camera.Yaw = glm::degrees(atan2(camera.Front.z, camera.Front.x)); // Yaw is the angle in the XZ-plane
-	camera.Pitch = glm::degrees(asin(camera.Front.y)); // Pitch is the vertical angle
-
-	// Center the cursor on the screen
-	glfwSetCursorPos(window, SCR_WIDTH / 2.0f, SCR_HEIGHT / 2.0f);
-	lastX = SCR_WIDTH / 2.0f; // Update lastX to match centered cursor
-	lastY = SCR_HEIGHT / 2.0f; // Update lastY to match centered cursor
-
-	firstMouse = false; // Ensure the next mouse movement doesn't trigger a reset
-
-	//std::cout << "Camera repositioned to precomputed fit." << std::endl;
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
-		if (action == GLFW_PRESS) {
-			camera.middle_Btn = true;
-			mouse_mid_btn = true;
-		}
-		else if (action == GLFW_RELEASE) {
-			camera.middle_Btn = false;
-			mouse_mid_btn = false;
-		}
-	}
-}
-
-void manipulator(GLFWwindow* window, Shader& ourShader) {
-	if (CTRL && mouse_mid_btn) {
-		model = glm::translate(model, glm::vec3(xoffset*mouseSensitivity,yoffset*mouseSensitivity,0.0f));
-	}
-	else if (mouse_mid_btn) {
-
-	}
-	ourShader.setMat4("model", model);
+void fitToScreen() {
+	camera.Position = glm::vec3(model[0])+glm::vec3(0.0f,0.0f,(ourModel->center.z + 2.0f));
 }
