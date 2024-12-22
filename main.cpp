@@ -17,6 +17,9 @@
 #include <string>
 #include <algorithm>
 
+#include <chrono>
+#include <thread>
+
 const unsigned int SCR_WIDTH = 1000;
 const unsigned int SCR_HEIGHT = 800;
 
@@ -25,6 +28,8 @@ void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void FitToScreen();
+void ProcessOrbitMotion(float xoffset, float yoffset);
+void ProcessPanMotion(float xoffset, float yoffset);
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -44,6 +49,7 @@ Model* ourModel = nullptr;
 
 float modelWidth, modelHeight;
 glm::vec3 modelCenter;
+float boundingBoxDiagonal;
 
 // Function to open file dialog and get the file path
 std::string OpenFileDialog() {
@@ -181,6 +187,7 @@ int main() {
 						modelWidth = ourModel->modelWidth;
 						modelHeight = ourModel->modelHeight;
 						modelCenter = ourModel->modelCenter;
+						boundingBoxDiagonal = std::sqrt(modelWidth * modelWidth + modelHeight * modelHeight);
 						FitToScreen();
 					}
 					else {
@@ -267,8 +274,14 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	float yoffset = lastY - ypos;
 	lastX = xpos;
 	lastY = ypos;
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	//camera.ProcessMouseMovement(xoffset, yoffset);
 	
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && 
+		(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS|| glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
+		ProcessPanMotion(xoffset, -yoffset);
+	}else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS || glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
+		ProcessOrbitMotion(xoffset, -yoffset);
+	}
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -278,11 +291,37 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void FitToScreen() {
 	float halfModelSize = std::max(modelHeight, modelWidth) / 2.0f;
-	float distance = (halfModelSize / std::tan(glm::radians(camera.Zoom))) * 5.0f;
+	float distance = (halfModelSize / std::tan(glm::radians(1.2f*camera.Zoom))) * 5.0f;
 
 	glm::vec3 forward = glm::normalize(camera.Front);
+	camera.Position = modelCenter - forward * distance;
+	camera.sneakUpdate();
+	
+	//std::this_thread::sleep_for(std::chrono::microseconds(1));
 
-	camera.Position = modelCenter - forward*distance;
+}
+
+void ProcessOrbitMotion(float xoffset, float yoffset) {
+	float yawAngle = xoffset*camera.MouseSensitivity;
+	float pitchAngle = yoffset*camera.MouseSensitivity;
+
+	// Apply rotations
+	glm::mat4 yawRotation = glm::rotate(glm::mat4(1.0f), glm::radians(yawAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 pitchRotation = glm::rotate(glm::mat4(1.0f), glm::radians(pitchAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	model = pitchRotation * yawRotation * model;
+}
+
+void ProcessPanMotion(float xoffset, float yoffset) {
+	//float panSpeed = camera.MovementSpeed * deltaTime;
+
+	float panSpeed = (boundingBoxDiagonal * 1.0f) * deltaTime;
+
+	xoffset *= panSpeed;
+	yoffset *= panSpeed;
+
+	camera.Position += -camera.Right * xoffset;
+	camera.Position += camera.Up * yoffset;
 
 	camera.sneakUpdate();
 }
