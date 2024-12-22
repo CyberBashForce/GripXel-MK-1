@@ -23,6 +23,8 @@ using namespace std;
 
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 
+glm::vec3 Min = glm::vec3(FLT_MAX);
+glm::vec3 Max = glm::vec3(-FLT_MAX);
 class Model
 {
 public:
@@ -31,21 +33,23 @@ public:
     vector<Mesh>    meshes;
     string directory;
     bool gammaCorrection;
-    glm::vec3 center = glm::vec3(0.5f, 0.5f, 0.0f);
+
+    glm::vec3 modelCenter;
+    float modelWidth, modelHeight;
 
     // constructor, expects a filepath to a 3D model.
     Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
         loadModel(path);
+        modelCenter = (Min + Max) / 2.0f;
+        modelWidth = Max.x - Min.x;
+        modelHeight = Max.y - Min.y;
     }
 
     // draws the model, and thus all its meshes
     void Draw(Shader& shader)
     {
         for (unsigned int i = 0; i < meshes.size(); i++) {
-            if (i == 0) {
-                //cout << center.x<<" "<<center.y<<" "<<center.z << '\n';
-            }
             meshes[i].Draw(shader);
         }
     }
@@ -56,7 +60,9 @@ private:
     {
         // read file via ASSIMP
         Assimp::Importer importer;
-        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenBoundingBoxes);
+        //const aabb &aabb = scene->mMeshes[0]->mAABB;
+        
         // check for errors
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         {
@@ -96,13 +102,6 @@ private:
         vector<unsigned int> indices;
         vector<Texture> textures;
 
-        GLfloat min_x, max_x,
-            min_y, max_y,
-            min_z, max_z;
-        min_x = max_x = mesh->mVertices[0].x;
-        min_y = max_y = mesh->mVertices[0].y;
-        min_z = max_z = mesh->mVertices[0].z;
-
         // walk through each of the mesh's vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
@@ -112,13 +111,8 @@ private:
             vector.x = mesh->mVertices[i].x;
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
-            if (vector.x < min_x) min_x = vector.x;
-            if (vector.y < min_y) min_y = vector.y;
-            if (vector.z < min_z) min_z = vector.z;
-            if (vector.x > max_x) max_x = vector.x;
-            if (vector.y > max_y) max_y = vector.y;
-            if (vector.z > max_z) max_z = vector.z;
-            center = glm::vec3((min_x + max_x) / 2, (min_y + max_y) / 2, (min_z + max_z) / 2);
+            Min = min(Min, vector);
+            Max = max(Max, vector);
             vertex.Position = vector;
             // normals
             if (mesh->HasNormals())

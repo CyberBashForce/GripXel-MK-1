@@ -24,7 +24,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void fitToScreen();
+void FitToScreen();
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -34,14 +34,16 @@ bool firstMouse = true;
 bool firstLoad = true;
 
 glm::mat4 model = (1.0f);
+glm::mat4 view;
 
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 Model* ourModel = nullptr;
-Shader* globalShader = nullptr;
-//Shader ourShader("I:/CodeX/OpenGL/Projects/Project8/model_loading_vs.glsl", "I:/CodeX/OpenGL/Projects/Project8/model_loading_fs.glsl");
+
+float modelWidth, modelHeight;
+glm::vec3 modelCenter;
 
 // Function to open file dialog and get the file path
 std::string OpenFileDialog() {
@@ -128,7 +130,6 @@ int main() {
 
 	Shader ourShader("I:/CodeX/OpenGL/Projects/Project8/model_loading_vs.glsl", "I:/CodeX/OpenGL/Projects/Project8/model_loading_fs.glsl");
 	//ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
-	globalShader = &ourShader;
 	//Render Engine
 	while (!glfwWindowShouldClose(window)) {
 
@@ -146,7 +147,7 @@ int main() {
 
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
+		view = camera.GetViewMatrix();
 		ourShader.setMat4("projection", projection);
 		ourShader.setMat4("view", view);
 
@@ -177,7 +178,10 @@ int main() {
 							delete ourModel; // Clean up the previous model if any
 						}
 						ourModel = new Model(selectedFile); // Load the new model
-						fitToScreen();
+						modelWidth = ourModel->modelWidth;
+						modelHeight = ourModel->modelHeight;
+						modelCenter = ourModel->modelCenter;
+						FitToScreen();
 					}
 					else {
 						std::cout << "No file selected." << std::endl;
@@ -239,9 +243,12 @@ void processInput(GLFWwindow* window) {
 		camera.ProcessKeyboard(UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 		camera.ProcessKeyboard(DOWN, deltaTime);
-	
+
 	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-		fitToScreen();
+		FitToScreen();
+
+	if(glfwGetKey(window,GLFW_KEY_K) == GLFW_PRESS)
+		std::cout << camera.Position.x << " " << camera.Position.y << " " << camera.Position.z << '\n';
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
@@ -260,9 +267,8 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	float yoffset = lastY - ypos;
 	lastX = xpos;
 	lastY = ypos;
-	model = glm::rotate(model, glm::radians(xoffset), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, glm::radians(yoffset), glm::vec3(0.0f, 1.0f, 0.0f));
-	//camera.ProcessMouseMovement(-xoffset, -yoffset);
+	camera.ProcessMouseMovement(xoffset, yoffset);
+	
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -270,6 +276,13 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void fitToScreen() {
-	camera.Position = glm::vec3(model[0])+glm::vec3(0.0f,0.0f,(ourModel->center.z + 2.0f));
+void FitToScreen() {
+	float halfModelSize = std::max(modelHeight, modelWidth) / 2.0f;
+	float distance = (halfModelSize / std::tan(glm::radians(camera.Zoom))) * 5.0f;
+
+	glm::vec3 forward = glm::normalize(camera.Front);
+
+	camera.Position = modelCenter - forward*distance;
+
+	camera.sneakUpdate();
 }

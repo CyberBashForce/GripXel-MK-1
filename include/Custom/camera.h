@@ -109,7 +109,9 @@ public:
 			Zoom = 45.0f;
 		}
 	}
-
+	void sneakUpdate() {
+		updateCameraVectors();
+	}
 private:
 	void updateCameraVectors() {
 		glm::vec3 front;
