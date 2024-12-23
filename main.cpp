@@ -166,7 +166,9 @@ int main() {
 
 		blueShader.setMat4("projection", projection);
 		blueShader.setMat4("view", view);
-		blueShader.setMat4("model", model);
+		glm::mat4 blueModel = model;
+		//blueModel = glm::scale(model, glm::vec3(0.95f,0.95f,0.95f));
+		blueShader.setMat4("model", blueModel);
 
 		// Render the loaded model (if it's loaded)
 		if (ourModel != nullptr) {
