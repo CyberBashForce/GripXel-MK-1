@@ -19,6 +19,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+
 using namespace std;
 
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
@@ -47,13 +48,13 @@ public:
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader& shader)
+    void Draw(Shader& shader, Shader& blueShader)
     {
         for (unsigned int i = 0; i < meshes.size(); i++) {
-            meshes[i].Draw(shader);
+            meshes[i].Draw(shader,blueShader);
         }
     }
- 
+
 private:
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
     void loadModel(string const& path)
@@ -62,7 +63,7 @@ private:
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_GenBoundingBoxes);
         //const aabb &aabb = scene->mMeshes[0]->mAABB;
-        
+
         // check for errors
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         {
@@ -72,6 +73,7 @@ private:
         // retrieve the directory path of the filepath
         directory = path.substr(0, path.find_last_of('/'));
 
+        unsigned int totalMeshes = scene->mNumMeshes;
         // process ASSIMP's root node recursively
         processNode(scene->mRootNode, scene);
     }

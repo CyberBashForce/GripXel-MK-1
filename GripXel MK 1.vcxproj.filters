@@ -53,6 +53,9 @@
     <ClInclude Include="include\Custom\model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Custom\mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Project8\model_loading_fs.glsl">
@@ -61,5 +64,7 @@
     <None Include="..\Project8\model_loading_vs.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="model_loading_blue_fs.glsl" />
+    <None Include="model_loading_blue_vs.glsl" />
   </ItemGroup>
 </Project>

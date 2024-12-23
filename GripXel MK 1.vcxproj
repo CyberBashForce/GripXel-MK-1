@@ -154,11 +154,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Custom\camera.h" />
+    <ClInclude Include="include\Custom\mesh.h" />
     <ClInclude Include="include\Custom\model.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Project8\model_loading_fs.glsl" />
     <None Include="..\Project8\model_loading_vs.glsl" />
+    <None Include="model_loading_blue_fs.glsl" />
+    <None Include="model_loading_blue_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

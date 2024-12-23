@@ -135,6 +135,8 @@ int main() {
 	ImGui::StyleColorsDark();
 
 	Shader ourShader("I:/CodeX/OpenGL/Projects/Project8/model_loading_vs.glsl", "I:/CodeX/OpenGL/Projects/Project8/model_loading_fs.glsl");
+	Shader blueShader("I:/CodeX/OpenGL/Projects/GripXel MK 1/model_loading_blue_vs.glsl", "I:/CodeX/OpenGL/Projects/GripXel MK 1/model_loading_blue_fs.glsl");
+
 	//ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
 	//Render Engine
 	while (!glfwWindowShouldClose(window)) {
@@ -145,11 +147,12 @@ int main() {
 
 		processInput(window);
 
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// don't forget to enable shader before setting uniforms
 		ourShader.use();
+		//blueShader.use();
 
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -159,10 +162,16 @@ int main() {
 
 		ourShader.setMat4("model", model);
 
+		blueShader.use();
+
+		blueShader.setMat4("projection", projection);
+		blueShader.setMat4("view", view);
+		blueShader.setMat4("model", model);
+
 		// Render the loaded model (if it's loaded)
 		if (ourModel != nullptr) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			ourModel->Draw(ourShader); // Draw the model
+			ourModel->Draw(ourShader,blueShader); // Draw the model
 			//std::cout << "Model loaded with " << ourModel->meshes.size() << " meshes." << std::endl;
 
 		}
@@ -205,7 +214,7 @@ int main() {
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
-		
+
 		}
 		// Render ImGui
 		ImGui::Render();
@@ -254,7 +263,7 @@ void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
 		FitToScreen();
 
-	if(glfwGetKey(window,GLFW_KEY_K) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
 		std::cout << camera.Position.x << " " << camera.Position.y << " " << camera.Position.z << '\n';
 }
 
@@ -275,11 +284,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	lastX = xpos;
 	lastY = ypos;
 	//camera.ProcessMouseMovement(xoffset, yoffset);
-	
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && 
-		(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS|| glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
+		(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
 		ProcessPanMotion(xoffset, -yoffset);
-	}else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS || glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
+	}
+	else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS || glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) {
 		ProcessOrbitMotion(xoffset, -yoffset);
 	}
 }
@@ -291,19 +301,19 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void FitToScreen() {
 	float halfModelSize = std::max(modelHeight, modelWidth) / 2.0f;
-	float distance = (halfModelSize / std::tan(glm::radians(1.2f*camera.Zoom))) * 5.0f;
+	float distance = (halfModelSize / std::tan(glm::radians(1.2f * camera.Zoom))) * 5.0f;
 
 	glm::vec3 forward = glm::normalize(camera.Front);
 	camera.Position = modelCenter - forward * distance;
 	camera.sneakUpdate();
-	
+
 	//std::this_thread::sleep_for(std::chrono::microseconds(1));
 
 }
 
 void ProcessOrbitMotion(float xoffset, float yoffset) {
-	float yawAngle = xoffset*camera.MouseSensitivity;
-	float pitchAngle = yoffset*camera.MouseSensitivity;
+	float yawAngle = xoffset * camera.MouseSensitivity;
+	float pitchAngle = yoffset * camera.MouseSensitivity;
 
 	// Apply rotations
 	glm::mat4 yawRotation = glm::rotate(glm::mat4(1.0f), glm::radians(yawAngle), glm::vec3(0.0f, 1.0f, 0.0f));
