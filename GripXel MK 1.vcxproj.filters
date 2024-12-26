@@ -66,5 +66,8 @@
     </None>
     <None Include="model_loading_blue_fs.glsl" />
     <None Include="model_loading_blue_vs.glsl" />
+    <None Include="..\Project5\Gesture.py">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

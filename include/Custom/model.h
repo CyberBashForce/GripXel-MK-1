@@ -51,7 +51,7 @@ public:
     void Draw(Shader& shader, Shader& blueShader)
     {
         for (unsigned int i = 0; i < meshes.size(); i++) {
-            meshes[i].Draw(shader,blueShader);
+            meshes[i].Draw(shader, blueShader);
         }
     }
 

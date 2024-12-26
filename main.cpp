@@ -1,10 +1,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#include <windows.h>
+
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
-#include <windows.h>
 
 #include <Custom/camera.h>
 #include <glm/glm.hpp>
@@ -17,8 +20,14 @@
 #include <string>
 #include <algorithm>
 
+#include <cstring>
+
 #include <chrono>
 #include <thread>
+
+#pragma comment(lib, "Ws2_32.lib")
+#define PORT 12345
+#define BUFF_LEN 512
 
 const unsigned int SCR_WIDTH = 1000;
 const unsigned int SCR_HEIGHT = 800;
@@ -85,6 +94,88 @@ std::string OpenFileDialog() {
 
 int main() {
 
+	//####################  N E T W O R K S ###########################//
+
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0)
+	{
+		std::cout << "Failed to initialize Winsock" << '\n';
+		return -1;
+	}
+	else
+	{
+		std::cout << "Winsock initialized successfully!" << '\n';
+	}
+
+	SOCKET socketObj = INVALID_SOCKET;
+	socketObj = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (socketObj == INVALID_SOCKET)
+	{
+		std::cout << "Error Intializing the Socket!" << WSAGetLastError() << '\n';
+		WSACleanup();
+		return -1;
+	}
+	else
+	{
+		std::cout << "Socket is created Successfully!" << '\n';
+	}
+	const char* ip = "127.0.0.1";
+	sockaddr_in address;
+	address.sin_family = AF_INET;
+	//address.sin_addr.s_addr = inet_addr("127.0.0.1");
+	inet_pton(AF_INET, ip, &(address.sin_addr));
+	address.sin_port = htons(PORT);
+
+	if (bind(socketObj, reinterpret_cast<SOCKADDR*>(&address), sizeof(address)) == SOCKET_ERROR)
+	{
+		std::cout << "Failed to bind the socket!" << WSAGetLastError() << '\n';
+		closesocket(socketObj);
+		WSACleanup();
+		return -1;
+	}
+	else
+	{
+		std::cout << "Socket Binded Successfully!" << '\n';
+	}
+
+
+
+	if (listen(socketObj, SOMAXCONN) == SOCKET_ERROR)
+	{
+		std::cout << "Failed to bind the socket!" << WSAGetLastError() << '\n';
+		closesocket(socketObj);
+		WSACleanup();
+		return -1;
+	}
+	else
+	{
+		std::cout << "Listening.........." << '\n';
+	}
+	SOCKET clientSocket = INVALID_SOCKET;
+
+	clientSocket = accept(socketObj, (sockaddr*)nullptr, (int*)nullptr);
+
+	if (clientSocket == INVALID_SOCKET)
+	{
+		std::cout << "Accept Failed! " << WSAGetLastError() << '\n';
+		closesocket(socketObj);
+		WSACleanup();
+		return -1;
+	}
+	else
+	{
+		std::cout << "Connection Accepted OK!" << '\n';
+	}
+
+	u_long mode = 1; // 1 to enable non-blocking mode
+	ioctlsocket(clientSocket, FIONBIO, &mode);
+
+	char receiveBuffer[BUFF_LEN];
+
+	//####################  N E T W O R K S ###########################//
+
+
 	//Setup GLFW
 
 	glfwInit();
@@ -118,6 +209,7 @@ int main() {
 
 	// configure global opengl state
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
 
 	// Setup ImGui context
 	IMGUI_CHECKVERSION();
@@ -148,7 +240,7 @@ int main() {
 		processInput(window);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |GL_STENCIL_BUFFER_BIT);
 
 		// don't forget to enable shader before setting uniforms
 		ourShader.use();
@@ -173,7 +265,7 @@ int main() {
 		// Render the loaded model (if it's loaded)
 		if (ourModel != nullptr) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			ourModel->Draw(ourShader,blueShader); // Draw the model
+			ourModel->Draw(ourShader, blueShader); // Draw the model
 			//std::cout << "Model loaded with " << ourModel->meshes.size() << " meshes." << std::endl;
 
 		}
@@ -225,6 +317,28 @@ int main() {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
+		//####################  N E T W O R K S ###########################//
+
+		memset(receiveBuffer, 0, sizeof(receiveBuffer));
+		int rbyteCount = recv(clientSocket, receiveBuffer, BUFF_LEN, 0);
+		if (rbyteCount > 0) {
+			if (receiveBuffer[0] == 'C' && ourModel != nullptr) {
+				model = glm::rotate(model, glm::radians((float)glfwGetTime()*0.2f), glm::vec3(0.0f, 1.0f, 0.0f));
+			}
+			else if (receiveBuffer[0] == 'O' && ourModel != nullptr) {
+				//camera.Zoom += 1.0f;
+				model = glm::rotate(model, glm::radians((float)glfwGetTime()*0.2f), glm::vec3(1.0f, 0.0f, 0.0f));
+			}
+
+			//if (camera.Zoom < 1.0f)
+			//	camera.Zoom = 1.0f;
+			//if (camera.Zoom > 90.0f)
+			//	camera.Zoom = 90.0f;
+		}
+		else if (rbyteCount == -1 && WSAGetLastError() != WSAEWOULDBLOCK) {
+			std::cerr << "Networking error: " << WSAGetLastError() << std::endl;
+		}
+
 	}
 	// Cleanup
 	if (ourModel != nullptr) {
@@ -237,6 +351,15 @@ int main() {
 	ImGui::DestroyContext();
 
 	glfwTerminate();
+
+	//####################  N E T W O R K S ###########################//
+
+	closesocket(clientSocket);
+	closesocket(socketObj);
+	WSACleanup();
+
+	//####################  N E T W O R K S ###########################//
+
 
 	return 0;
 }
@@ -302,7 +425,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 void FitToScreen() {
-	float halfModelSize = std::max(modelHeight, modelWidth) / 2.0f;
+	float halfModelSize = max(modelHeight, modelWidth) / 2.0f;
 	float distance = (halfModelSize / std::tan(glm::radians(1.2f * camera.Zoom))) * 5.0f;
 
 	glm::vec3 forward = glm::normalize(camera.Front);

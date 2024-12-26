@@ -56,7 +56,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader& shader,Shader& blueShader)
+    void Draw(Shader& shader, Shader& blueShader)
     {
         // bind appropriate textures
         unsigned int diffuseNr = 1;
@@ -83,26 +83,25 @@ public:
             // and finally bind the texture
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }
-
-        // Draw with the first shader
-        shader.use();
-        glBindVertexArray(VAO);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
-        glActiveTexture(GL_TEXTURE0); // Reset active texture
-
         // Draw with the blue shader
         blueShader.use();
-        glLineWidth(0.5f);
+        glBindVertexArray(VAO);
+        glLineWidth(2.0f);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glCullFace(GL_FRONT);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
         glCullFace(GL_BACK);
 
+        // Draw with the first shader
+        shader.use();
+        //glBindVertexArray(VAO);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+        glActiveTexture(GL_TEXTURE0); // Reset active texture
 
         // Reset states
         glBindVertexArray(0);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Reset polygon mode
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Reset polygon mode
     }
 
 private:
