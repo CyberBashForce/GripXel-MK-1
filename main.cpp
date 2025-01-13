@@ -19,6 +19,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <sstream>
 
 #include <cstring>
 
@@ -323,7 +324,13 @@ int main() {
 		int rbyteCount = recv(clientSocket, receiveBuffer, BUFF_LEN, 0);
 		if (rbyteCount > 0) {
 			if (receiveBuffer[0] == 'C' && ourModel != nullptr) {
-				model = glm::rotate(model, glm::radians((float)glfwGetTime()*0.2f), glm::vec3(0.0f, 1.0f, 0.0f));
+				float x_coord, y_coord;
+				std::istringstream stream(receiveBuffer);
+				char c;
+				stream >> c >> x_coord >> y_coord;
+				ProcessPanMotion(x_coord/0.1, y_coord/0.1);
+				cout << x_coord<<" - "<<y_coord << '\n';
+				//model = glm::rotate(model, glm::radians((float)glfwGetTime()*0.2f), glm::vec3(0.0f, 1.0f, 0.0f));
 			}
 			else if (receiveBuffer[0] == 'O' && ourModel != nullptr) {
 				//camera.Zoom += 1.0f;
