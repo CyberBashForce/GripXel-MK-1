@@ -227,10 +227,9 @@ int main() {
 	// Setup ImGui Style
 	ImGui::StyleColorsDark();
 
-	Shader ourShader("I:/CodeX/OpenGL/Projects/Project8/model_loading_vs.glsl", "I:/CodeX/OpenGL/Projects/Project8/model_loading_fs.glsl");
-	Shader blueShader("I:/CodeX/OpenGL/Projects/GripXel MK 1/model_loading_blue_vs.glsl", "I:/CodeX/OpenGL/Projects/GripXel MK 1/model_loading_blue_fs.glsl");
+	Shader ourShader("model_loading_vs.glsl", "model_loading_fs.glsl");
+	Shader blueShader("model_loading_blue_vs.glsl", "model_loading_blue_fs.glsl");
 
-	//ourModel = new Model("I:/CodeX/OpenGL/resources/backpack/backpack.obj");
 	//Render Engine
 	while (!glfwWindowShouldClose(window)) {
 
